@@ -65,7 +65,6 @@ async def _fetch_scope(client: httpx.AsyncClient, settings: Settings, scope: str
     except (httpx.HTTPError, ValueError) as exc:
         raise ForexFactoryUnavailableError(f"Failed to fetch ForexFactory scope '{scope}': {exc}") from exc
 
-
 async def fetch_events(client: httpx.AsyncClient, redis, settings: Settings) -> list[CalendarEvent]:
     """Fetch and normalize all available ForexFactory events (last/this/next week), using the cache when possible."""
     events: list[CalendarEvent] = []
@@ -73,15 +72,21 @@ async def fetch_events(client: httpx.AsyncClient, redis, settings: Settings) -> 
 
     for scope in SCOPES:
         cache_key = f"calendar:ff:{scope}"
+        failure_key = f"calendar:ff:failed:{scope}"
         cached = await get_cached_json(redis, cache_key)
 
         if cached is not None:
             raw_entries = cached
         else:
+            if await redis.exists(failure_key):
+                print(f"ForexFactory scope '{scope}' in cooldown after a recent failure, skipping fetch")
+                scope_errors.append(scope)
+                continue
             try:
                 raw_entries = await _fetch_scope(client, settings, scope)
             except ForexFactoryUnavailableError as exc:
                 print(f"ForexFactory scope '{scope}' unavailable, skipping: {exc}")
+                await redis.set(failure_key, "1", ex=settings.cache_failure_cooldown_seconds)
                 scope_errors.append(scope)
                 continue
             await set_cached_json(redis, cache_key, raw_entries, settings.cache_ttl_seconds)
@@ -97,4 +102,7 @@ async def fetch_events(client: httpx.AsyncClient, redis, settings: Settings) -> 
         )
 
     return events
+
+    
+
 

@@ -20,6 +20,7 @@ class Settings(BaseSettings):
 
     # --- Caching ---
     cache_ttl_seconds: int = 900  # 15 minutes
+    cache_failure_cooldown_seconds: int = 300  # 5 minutes — avoid hammering a rate-limited source
 
     # --- Redis (rate limiting + cache) ---
     redis_url: str = "redis://localhost:6379/0"
