@@ -6,7 +6,7 @@ from redis.asyncio import Redis
 # Slightly over a month, so a key never expires before the next month's key takes over.
 _KEY_TTL_SECONDS = 60 * 60 * 24 * 32
 
-DEFAULT_TIER = "FREE"
+DEFAULT_TIER = "BASIC"
 
 
 def _month_bucket() -> str:
