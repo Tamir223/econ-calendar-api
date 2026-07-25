@@ -25,19 +25,21 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost:6379/0"
 
     # --- Rate limiting tiers (requests per calendar month) ---
-    rate_limit_free: int = 50
-    rate_limit_basic: int = 1_000
-    rate_limit_pro: int = 10_000
-    rate_limit_business: int = 100_000
+    # Names match RapidAPI's actual plan names for this listing (Basic/Pro/Ultra/Mega).
+    rate_limit_basic: int = 50
+    rate_limit_pro: int = 1_000
+    rate_limit_ultra: int = 10_000
+    rate_limit_mega: int = 100_000
 
     @property
     def tier_limits(self) -> dict[str, int]:
         return {
-            "FREE": self.rate_limit_free,
             "BASIC": self.rate_limit_basic,
             "PRO": self.rate_limit_pro,
-            "BUSINESS": self.rate_limit_business,
+            "ULTRA": self.rate_limit_ultra,
+            "MEGA": self.rate_limit_mega,
         }
+
 
 
 @lru_cache
